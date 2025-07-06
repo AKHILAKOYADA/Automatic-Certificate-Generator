@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Certificate Generator</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        canvas {
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        .layout-config {
+            background: #fff3cd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .layout-config h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .field-mapping {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .field-mapping select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .toggle-layout {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .toggle-layout:hover {
+            background: #138496;
+        }
+        .layout-section {
+            display: none;
+        }
+        .layout-section.show {
+            display: block;
+        }
+        .restored-data-notice {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Certificate Generator</h1>
+        
+        <form action="/generate" method="post" enctype="multipart/form-data">
+            <label>Upload Certificate Template</label><br>
+            <input type="file" name="template" accept="image/*" id="templateInput" {% if not form_data %}required{% endif %}><br>
+
+            <label>Upload Data File (CSV or Excel)</label><br>
+            <input type="file" name="data_file" accept=".csv,.xlsx,.xls" {% if not form_data %}required{% endif %}><br><br>
+
+            <label>Select Font</label><br>
+            <label for="font">Choose Font Style:</label>
+            <select name="font" id="font">
+                <option value="DancingScript-Regular.ttf" {% if form_data and form_data.font_name == 'DancingScript-Regular.ttf' %}selected{% endif %}>Dancing Script</option>
+                <option value="GreatVibes-Regular.ttf" {% if form_data and form_data.font_name == 'GreatVibes-Regular.ttf' %}selected{% endif %}>Great Vibes</option>
+                <option value="Pacifico-Regular.ttf" {% if form_data and form_data.font_name == 'Pacifico-Regular.ttf' %}selected{% endif %}>Pacifico</option>
+                <option value="Allura-Regular.ttf" {% if form_data and form_data.font_name == 'Allura-Regular.ttf' %}selected{% endif %}>Allura</option>
+                <option value="Satisfy-Regular.ttf" {% if form_data and form_data.font_name == 'Satisfy-Regular.ttf' %}selected{% endif %}>Satisfy</option>
+            </select><br><br>
+
+            <label>Font Size</label><br>
+            <input type="number" name="fontsize" value="{{ form_data.font_size if form_data and form_data.font_size else 36 }}" required><br><br>
+
+            <button type="submit">Generate Certificates</button>
+        </form>
+
+        <hr>
+
+        <h2>Position Placeholders</h2>
+        <input type="file" id="bgInput" accept="image/*"><br>
+        <canvas id="editorCanvas" width="1000" height="700"></canvas><br>
+        <input type="text" id="fieldText" placeholder="e.g. name, event"><br>
+        <button onclick="addField()">Add Field</button>
+        <button onclick="undoField()">Undo</button>
+        <button onclick="saveLayout()">Save Layout</button>
+        <div id="restoredFieldsInfo" style="margin-top:10px;color:#155724;font-size:14px;display:none;">Previously added fields have been restored. You can add more fields below.</div>
+    </div>
+
+    <script>
+        window.formData = {{ form_data|tojson|safe if form_data else 'null' }};
+        window.sessionData = {{ session.certificate_session|tojson|safe if session.certificate_session else 'null' }};
+    </script>
+    <script src="/static/js/script.js"></script>
+    <script>
+        function toggleLayoutConfig() {
+            const section = document.getElementById('layoutSection');
+            section.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>

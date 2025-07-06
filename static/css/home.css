@@ -1,0 +1,68 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: url('../images/background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+}
+
+/* Dark overlay to dim the background */
+.overlay {
+    background-color: rgba(0, 0, 0, 0.4); /* Adjust opacity (0.4 = 40% dim) */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    color: white;
+}
+
+/* Cursive title styling */
+.title {
+    font-family: 'Pinyon Script', cursive;
+    font-size: 5rem;
+    margin-top: 3rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+/* Updated Get Started Button with Curve & Arrow */
+.get-started-btn {
+  background-color: #000;
+  color: white;
+  border: none;
+  padding: 12px 40px 12px 30px; /* Extra right padding for arrow */
+  font-size: 1.2rem;
+  margin-bottom: 3rem;
+  border-radius: 50px; /* Curved edges */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Arrow using pseudo-element */
+.get-started-btn::after {
+  content: '→';
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.3s ease;
+}
+
+/* Hover Effects */
+.get-started-btn:hover {
+  background-color: #333;
+  padding-right: 50px; /* Expand space for arrow movement */
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.get-started-btn:hover::after {
+  right: 20px; /* Arrow moves right on hover */
+}
+/* Modal styling */
+.modal-content {
+    border-radius: 10px;
+}

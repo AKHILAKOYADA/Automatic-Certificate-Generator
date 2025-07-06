@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Certificate Preview</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/preview.css">
+</head>
+<body>
+    <div class="preview-container">
+        <div class="preview-header">
+            <h1>📜 Certificate Preview</h1>
+            <p>{{ total_certificates }} certificate{{ 's' if total_certificates != 1 else '' }} generated successfully!</p>
+            <p>Review your certificates below before downloading</p>
+        </div>
+        
+        <div class="certificates-grid" id="certificatesGrid">
+            {% for cert_file in certificate_files %}
+            <div class="certificate-item">
+                <img src="/static/generated/{{ session_id }}/{{ cert_file }}" 
+                     alt="Certificate {{ loop.index }}" 
+                     class="certificate-image"
+                     onerror="this.style.display='none'; this.nextElementSibling.innerHTML='<div class=\'error\'>Image not found</div>';">
+                <div class="certificate-name">Certificate {{ loop.index }}</div>
+                <div class="certificate-number">{{ cert_file }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/download" class="btn btn-download">
+                📥 Download All Certificates (ZIP)
+            </a>
+            <a href="/back_to_generate" class="btn btn-back">
+                🔄 Generate New Certificates
+            </a>
+        </div>
+    </div>
+    
+    <script src="/static/js/preview.js"></script>
+</body>
+</html> 
