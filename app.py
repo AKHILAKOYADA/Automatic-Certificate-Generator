@@ -11,12 +11,34 @@ import smtplib
 from email.message import EmailMessage
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Required for flash messages
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secret_key_here_change_in_production')  # Required for flash messages
 
-# Folder setup
-GENERATED_FOLDER = 'static/generated'
-FONTS_FOLDER = 'static/fonts'
-os.makedirs(GENERATED_FOLDER, exist_ok=True)
+# Detect if running on Vercel (serverless environment)
+IS_VERCEL = os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_ENV') is not None
+
+# Folder setup - Use /tmp on Vercel, otherwise use local static folder
+if IS_VERCEL:
+    # On Vercel, filesystem is read-only except /tmp
+    GENERATED_FOLDER = '/tmp/generated'
+    # Static files (fonts, images) are available in the project root via /static
+    FONTS_FOLDER = 'static/fonts'
+else:
+    # Traditional deployment (local, Render, etc.)
+    GENERATED_FOLDER = 'static/generated'
+    FONTS_FOLDER = 'static/fonts'
+
+# Create generated folder if it doesn't exist
+try:
+    os.makedirs(GENERATED_FOLDER, exist_ok=True)
+except (OSError, PermissionError) as e:
+    print(f"Warning: Could not create GENERATED_FOLDER {GENERATED_FOLDER}: {e}")
+    # Fallback to /tmp if available
+    if not IS_VERCEL:
+        try:
+            GENERATED_FOLDER = '/tmp/generated'
+            os.makedirs(GENERATED_FOLDER, exist_ok=True)
+        except Exception as fallback_error:
+            print(f"Fallback also failed: {fallback_error}")
 
 VALID_PASSWORD = "kuce&t"
 
@@ -424,7 +446,8 @@ def generate_certificates():
 
         # Load saved layout configuration
         saved_layout = {}
-        layout_file_path = 'static/uploads/layout.json'
+        # On Vercel, use /tmp for writable files; otherwise use static/uploads
+        layout_file_path = '/tmp/layout.json' if IS_VERCEL else 'static/uploads/layout.json'
         if os.path.exists(layout_file_path):
             try:
                 with open(layout_file_path, 'r') as f:
@@ -708,7 +731,12 @@ def save_layout():
     try:
         layout_data = request.get_json()
         # Save layout to a JSON file
-        with open('static/uploads/layout.json', 'w') as f:
+        # On Vercel, use /tmp for writable files; otherwise use static/uploads
+        layout_file_path = '/tmp/layout.json' if IS_VERCEL else 'static/uploads/layout.json'
+        # Ensure directory exists if not using /tmp
+        if not IS_VERCEL:
+            os.makedirs(os.path.dirname(layout_file_path), exist_ok=True)
+        with open(layout_file_path, 'w') as f:
             json.dump(layout_data, f, indent=2)
         return jsonify({"status": "success", "message": "Layout saved successfully!"})
     except Exception as e:
