@@ -6,19 +6,19 @@ import sys
 import os
 
 # Add parent directory to path to import app
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
-from app import app
+# Import Flask app
+try:
+    from app import app
+except ImportError as e:
+    print(f"Error importing app: {e}")
+    print(f"Current directory: {os.getcwd()}")
+    print(f"Python path: {sys.path}")
+    raise
 
-# Vercel expects a handler function that receives (req, res) or follows ASGI/WSGI
-def handler(request, response):
-    """Vercel serverless function handler"""
-    # This will be handled by Vercel's Python runtime automatically
-    # The Flask app will be served via the Python runtime adapter
-    pass
-
-# Export for Vercel's Python runtime
-# Vercel's @vercel/python automatically detects Flask app objects
-# and wraps them appropriately for serverless execution
-__all__ = ['app']
+# Vercel's @vercel/python runtime automatically detects Flask app objects
+# Just exporting the app is enough - Vercel will wrap it appropriately
 
