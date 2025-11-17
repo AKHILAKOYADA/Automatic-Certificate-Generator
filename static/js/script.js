@@ -4,6 +4,24 @@ const layout = {};
 const history = [];
 let currentImage = null;
 
+// Parse embedded JSON data for session restoration
+;(function restoreGlobalsFromJson() {
+    try {
+        var formDataNode = document.getElementById('formDataJson');
+        var sessionDataNode = document.getElementById('sessionDataJson');
+        if (formDataNode) {
+            window.formData = JSON.parse(formDataNode.textContent || 'null');
+        }
+        if (sessionDataNode) {
+            window.sessionData = JSON.parse(sessionDataNode.textContent || 'null');
+        }
+    } catch (e) {
+        // Fallback to nulls on parse failure
+        window.formData = window.formData || null;
+        window.sessionData = window.sessionData || null;
+    }
+})();
+
 document.getElementById("bgInput").addEventListener("change", function(e) {
     const reader = new FileReader();
     reader.onload = function(event) {
@@ -25,8 +43,29 @@ canvas.addEventListener("click", function(e) {
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        layout[field.replace(/[()]/g, "")] = [x, y];
-        history.push(field.replace(/[()]/g, ""));
+        const cleanField = field.replace(/[()]/g, "");
+        
+        // Handle signature field naming
+        if (cleanField.toLowerCase() === 'signature') {
+            // Allow multiple placements of the same signature
+            // Use a format like signature1_pos1, signature1_pos2, etc.
+            const existingSignatures = Object.keys(layout).filter(key => key.startsWith('signature'));
+            if (existingSignatures.length === 0) {
+                layout['signature1_pos1'] = [x, y];
+                history.push('signature1_pos1');
+            } else {
+                // Find the next available position for signature1
+                let posNumber = 1;
+                while (layout[`signature1_pos${posNumber}`]) {
+                    posNumber++;
+                }
+                layout[`signature1_pos${posNumber}`] = [x, y];
+                history.push(`signature1_pos${posNumber}`);
+            }
+        } else {
+            layout[cleanField] = [x, y];
+            history.push(cleanField);
+        }
         redrawAll();
     }
 });
@@ -34,10 +73,17 @@ canvas.addEventListener("click", function(e) {
 function addField() {
     const fieldText = document.getElementById("fieldText").value.trim();
     if (!fieldText) {
-        alert("Please enter a field name (e.g., name, event, date) in the text box first.");
+        alert("Please enter a field name (e.g., name, event, date, signature) in the text box first.");
         return;
     }
-    alert("Now click on the canvas where you want to place the '" + fieldText + "' text.");
+    
+    if (fieldText.toLowerCase() === 'signature') {
+        const existingSignatures = Object.keys(layout).filter(key => key.startsWith('signature'));
+        const sigNumber = existingSignatures.length + 1;
+        alert(`Now click on the canvas where you want to place Signature ${sigNumber}. You can add multiple signatures by typing "signature" again and clicking different positions.`);
+    } else {
+        alert("Now click on the canvas where you want to place the '" + fieldText + "' text.");
+    }
 }
 
 function undoField() {
@@ -81,7 +127,26 @@ function redrawAll() {
         ctx.fillStyle = "black";
         for (let key in layout) {
             let [x, y] = layout[key];
-            ctx.fillText(key, x, y);
+            if (key.startsWith('signature')) {
+                // Draw signature placeholder differently
+                ctx.fillStyle = "red";
+                ctx.font = "16px Arial";
+                // Handle new naming convention: signature1_pos1, signature1_pos2, etc.
+                if (key.includes('_pos')) {
+                    const parts = key.split('_pos');
+                    const sigNumber = parts[0].replace('signature', '');
+                    const posNumber = parts[1];
+                    ctx.fillText(`✍️ SIGNATURE ${sigNumber} (POS ${posNumber})`, x, y);
+                } else {
+                    // Legacy support for old naming
+                    const sigNumber = key === 'signature' ? '1' : key.replace('signature', '');
+                    ctx.fillText(`✍️ SIGNATURE ${sigNumber}`, x, y);
+                }
+                ctx.fillStyle = "black";
+                ctx.font = "20px Arial";
+            } else {
+                ctx.fillText(key, x, y);
+            }
         }
     }
 }
@@ -112,7 +177,10 @@ window.addEventListener('DOMContentLoaded', function() {
             if (restored) {
                 redrawAll();
                 const info = document.getElementById('restoredFieldsInfo');
-                if (info) info.style.display = 'block';
+                if (info) {
+                    info.style.display = 'block';
+                    info.textContent = 'Previously added fields have been restored. You can add more fields below.';
+                }
             }
         })
         .catch(() => {});
@@ -132,20 +200,22 @@ window.addEventListener('DOMContentLoaded', function() {
             img.src = '/static/generated/' + sessionId + '/' + templateFilename;
         }
     }
+    
+    // Debug: Log what we're trying to restore
+    console.log('Session data:', window.sessionData);
+    console.log('Form data:', window.formData);
+    console.log('Current layout:', layout);
 });
 
 // Template image preview and auto-canvas load
 const templateInput = document.getElementById('templateInput');
-const templatePreview = document.getElementById('templatePreview');
 
-if (templateInput && templatePreview) {
+if (templateInput) {
     templateInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(event) {
-                templatePreview.src = event.target.result;
-                templatePreview.style.display = 'block';
                 // Draw on canvas as background
                 const img = new Image();
                 img.onload = function() {
@@ -158,9 +228,27 @@ if (templateInput && templatePreview) {
             };
             reader.readAsDataURL(file);
         } else {
-            templatePreview.src = '';
-            templatePreview.style.display = 'none';
+            // clear canvas background
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            currentImage = null;
+            redrawAll();
         }
     });
+}
+
+// Ensure preview is shown when restoring from session
+if (window.sessionData && window.formData && window.formData.template_filename) {
+    var sessionId = window.sessionData.session_id;
+    var templateFilename = window.formData.template_filename;
+    if (sessionId && templateFilename) {
+        var img2 = new Image();
+        img2.onload = function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img2, 0, 0, canvas.width, canvas.height);
+            currentImage = img2;
+            redrawAll();
+        };
+        img2.src = '/static/generated/' + sessionId + '/' + templateFilename;
+    }
 }
 

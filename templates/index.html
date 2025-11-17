@@ -56,6 +56,110 @@
             margin-bottom: 20px;
             border-left: 4px solid #28a745;
         }
+        
+        /* Multiple Signature Styles */
+        #signatureContainer {
+            margin-bottom: 15px;
+        }
+        
+        .signature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .signature-field {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            min-height: 120px;
+        }
+        
+        .signature-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .signature-header label {
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+        
+        .remove-signature {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .remove-signature:hover {
+            background: #c82333;
+        }
+        
+        .signature-input {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .signature-size-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .signature-size-container label {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+        
+        .signature-size {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        .add-signature-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+        
+        .add-signature-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+        
+        .add-signature-btn::before {
+            content: "+";
+            font-size: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -77,10 +181,51 @@
                 <option value="Pacifico-Regular.ttf" {% if form_data and form_data.font_name == 'Pacifico-Regular.ttf' %}selected{% endif %}>Pacifico</option>
                 <option value="Allura-Regular.ttf" {% if form_data and form_data.font_name == 'Allura-Regular.ttf' %}selected{% endif %}>Allura</option>
                 <option value="Satisfy-Regular.ttf" {% if form_data and form_data.font_name == 'Satisfy-Regular.ttf' %}selected{% endif %}>Satisfy</option>
+                <option value="AlexBrush-Regular.ttf" {% if form_data and form_data.font_name == 'AlexBrush-Regular.ttf' %}selected{% endif %}>Alex Brush</option>
+                <option value="EdwardianScriptITC.ttf" {% if form_data and form_data.font_name == 'EdwardianScriptITC.ttf' %}selected{% endif %}>Edwardian Script ITC</option>
             </select><br><br>
 
             <label>Font Size</label><br>
             <input type="number" name="fontsize" value="{{ form_data.font_size if form_data and form_data.font_size else 36 }}" required><br><br>
+
+            <label>Digital Signatures (Optional)</label><br>
+            <div id="signatureContainer" class="signature-grid">
+                <div class="signature-field" data-signature-index="1">
+                    <div class="signature-header">
+                        <label>Signature 1</label>
+                        <button type="button" class="remove-signature" onclick="removeSignature(this)">×</button>
+                    </div>
+                    <input type="file" name="signature1" accept="image/*" class="signature-input">
+                    <div class="signature-size-container">
+                        <label>Size (percentage):</label>
+                        <input type="number" name="signature1_size" value="20" min="5" max="100" step="5" class="signature-size">
+                    </div>
+                </div>
+                <div class="signature-field" data-signature-index="2">
+                    <div class="signature-header">
+                        <label>Signature 2</label>
+                        <button type="button" class="remove-signature" onclick="removeSignature(this)">×</button>
+                    </div>
+                    <input type="file" name="signature2" accept="image/*" class="signature-input">
+                    <div class="signature-size-container">
+                        <label>Size (percentage):</label>
+                        <input type="number" name="signature2_size" value="20" min="5" max="100" step="5" class="signature-size">
+                    </div>
+                </div>
+                <div class="signature-field" data-signature-index="3">
+                    <div class="signature-header">
+                        <label>Signature 3</label>
+                        <button type="button" class="remove-signature" onclick="removeSignature(this)">×</button>
+                    </div>
+                    <input type="file" name="signature3" accept="image/*" class="signature-input">
+                    <div class="signature-size-container">
+                        <label>Size (percentage):</label>
+                        <input type="number" name="signature3_size" value="20" min="5" max="100" step="5" class="signature-size">
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="addSignatureBtn" class="add-signature-btn">Add More Signatures</button>
+            <small>Upload signature images (PNG with transparent background recommended)</small><br><br>
 
             <button type="submit">Generate Certificates</button>
         </form>
@@ -90,23 +235,176 @@
         <h2>Position Placeholders</h2>
         <input type="file" id="bgInput" accept="image/*"><br>
         <canvas id="editorCanvas" width="1000" height="700"></canvas><br>
-        <input type="text" id="fieldText" placeholder="e.g. name, event"><br>
+        <input type="text" id="fieldText" placeholder="e.g. name, event, signature"><br>
         <button onclick="addField()">Add Field</button>
         <button onclick="undoField()">Undo</button>
         <button onclick="saveLayout()">Save Layout</button>
         <div id="restoredFieldsInfo" style="margin-top:10px;color:#155724;font-size:14px;display:none;">Previously added fields have been restored. You can add more fields below.</div>
+        <div style="margin-top:10px;color:#666;font-size:12px;">
+            <strong>Tip:</strong> Type "signature" in the field box and click to position signatures on the canvas. You can place the same signature at multiple positions by typing "signature" again and clicking different locations. Each signature upload (Signature 1, Signature 2, etc.) can be placed multiple times.
+        </div>
     </div>
 
-    <script>
-        window.formData = {{ form_data|tojson|safe if form_data else 'null' }};
-        window.sessionData = {{ session.certificate_session|tojson|safe if session.certificate_session else 'null' }};
-    </script>
+    <script id="formDataJson" type="application/json">{{ form_data|tojson|safe if form_data else 'null' }}</script>
+    <script id="sessionDataJson" type="application/json">{{ session.certificate_session|tojson|safe if session.certificate_session else 'null' }}</script>
     <script src="/static/js/script.js"></script>
     <script>
         function toggleLayoutConfig() {
             const section = document.getElementById('layoutSection');
             section.classList.toggle('show');
         }
+
+        // Multiple Signature Management
+        let signatureCount = 3;
+        
+        function addSignature() {
+            signatureCount++;
+            const container = document.getElementById('signatureContainer');
+            const newSignature = document.createElement('div');
+            newSignature.className = 'signature-field';
+            newSignature.setAttribute('data-signature-index', signatureCount);
+            
+            newSignature.innerHTML = `
+                <div class="signature-header">
+                    <label>Signature ${signatureCount}</label>
+                    <button type="button" class="remove-signature" onclick="removeSignature(this)">×</button>
+                </div>
+                <input type="file" name="signature${signatureCount}" accept="image/*" class="signature-input">
+                <div class="signature-size-container">
+                    <label>Size (percentage):</label>
+                    <input type="number" name="signature${signatureCount}_size" value="20" min="5" max="100" step="5" class="signature-size">
+                </div>
+            `;
+            
+            container.appendChild(newSignature);
+            updateRemoveButtons();
+        }
+        
+        function removeSignature(button) {
+            const signatureField = button.closest('.signature-field');
+            signatureField.remove();
+            updateRemoveButtons();
+            updateSignatureNumbers();
+        }
+        
+        function updateRemoveButtons() {
+            const signatureFields = document.querySelectorAll('.signature-field');
+            signatureFields.forEach((field, index) => {
+                const removeBtn = field.querySelector('.remove-signature');
+                if (signatureFields.length <= 1) {
+                    removeBtn.style.display = 'none';
+                } else {
+                    removeBtn.style.display = 'flex';
+                }
+            });
+        }
+        
+        function updateSignatureNumbers() {
+            const signatureFields = document.querySelectorAll('.signature-field');
+            signatureFields.forEach((field, index) => {
+                const label = field.querySelector('.signature-header label');
+                const fileInput = field.querySelector('.signature-input');
+                const sizeInput = field.querySelector('.signature-size');
+                const newIndex = index + 1;
+                
+                label.textContent = `Signature ${newIndex}`;
+                fileInput.name = `signature${newIndex}`;
+                sizeInput.name = `signature${newIndex}_size`;
+                field.setAttribute('data-signature-index', newIndex);
+            });
+            signatureCount = signatureFields.length;
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateRemoveButtons();
+            
+            // Add event listener for add signature button
+            document.getElementById('addSignatureBtn').addEventListener('click', addSignature);
+            
+            // Restore all form data
+            restoreFormData();
+        });
+        
+        function restoreFormData() {
+            if (!window.formData) {
+                console.log('No form data to restore');
+                return;
+            }
+            
+            console.log('Restoring form data:', window.formData);
+            
+            // Restore font selection
+            if (window.formData.font_name) {
+                const fontSelect = document.getElementById('font');
+                if (fontSelect) {
+                    fontSelect.value = window.formData.font_name;
+                }
+            }
+            
+            // Restore font size
+            if (window.formData.font_size) {
+                const fontSizeInput = document.querySelector('input[name="fontsize"]');
+                if (fontSizeInput) {
+                    fontSizeInput.value = window.formData.font_size;
+                }
+            }
+            
+            // Restore multiple signatures
+            restoreSignaturesFromFormData();
+            
+            // Show restored data notice
+            const notice = document.getElementById('restoredFieldsInfo');
+            if (notice) {
+                notice.style.display = 'block';
+                notice.textContent = 'Previously selected settings have been restored. You can make changes below.';
+            }
+        }
+        
+        function restoreSignaturesFromFormData() {
+            if (window.formData && window.formData.signature_sizes) {
+                const signatureSizes = window.formData.signature_sizes;
+                const signatureKeys = Object.keys(signatureSizes).filter(key => key.startsWith('signature'));
+                
+                console.log('Restoring signatures:', signatureKeys);
+                
+                // Remove the default signature field if we have more to restore
+                if (signatureKeys.length > 1) {
+                    const defaultSignature = document.querySelector('.signature-field[data-signature-index="1"]');
+                    if (defaultSignature) {
+                        defaultSignature.remove();
+                    }
+                }
+                
+                // Add signature fields for each signature in the form data
+                signatureKeys.forEach((key, index) => {
+                    if (index === 0) {
+                        // Update the first signature field
+                        const firstField = document.querySelector('.signature-field[data-signature-index="1"]');
+                        if (firstField) {
+                            const sizeInput = firstField.querySelector('.signature-size');
+                            if (sizeInput) {
+                                sizeInput.value = signatureSizes[key] || 20;
+                            }
+                        }
+                    } else {
+                        // Add additional signature fields
+                        addSignature();
+                        const newField = document.querySelector('.signature-field:last-child');
+                        if (newField) {
+                            const sizeInput = newField.querySelector('.signature-size');
+                            if (sizeInput) {
+                                sizeInput.value = signatureSizes[key] || 20;
+                            }
+                        }
+                    }
+                });
+                
+                updateRemoveButtons();
+                updateSignatureNumbers();
+            }
+        }
+
     </script>
 </body>
 </html>
