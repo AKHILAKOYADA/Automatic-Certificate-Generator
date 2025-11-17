@@ -1,8 +1,3 @@
-EMAIL
-email id: kucet.official@gmail.com
-password: kucet@2025
-App password: cstx vuaq cizi ixha
-SMTP HOST:smtp.gmail.com
-PORT:587
+
 
 Project password: kuce&t
